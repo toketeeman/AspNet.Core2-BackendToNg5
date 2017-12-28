@@ -27,6 +27,7 @@ namespace DatingApp.API
         {
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
             services.AddMvc();
+            services.AddCors(); // Allows access from the SPA front-end stage. And order does not matter here.
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,7 +38,8 @@ namespace DatingApp.API
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMvc();
+            app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
+            app.UseMvc();  // Must come last because it issues a response to the request, ending the pipeline.
         }
     }
 }
