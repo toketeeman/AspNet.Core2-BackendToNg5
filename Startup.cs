@@ -28,6 +28,7 @@ namespace DatingApp.API
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
             services.AddMvc();
             services.AddCors(); // Allows access from the SPA front-end stage. And order does not matter here.
+            services.AddScoped<IAuthRepository, AuthRepository>();  // One service instance per http request.
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
