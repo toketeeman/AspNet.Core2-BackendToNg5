@@ -7,6 +7,7 @@ using DatingApp.API.Data;
 using DatingApp.API.Dtos;
 using DatingApp.API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DatingApp.API.Controllers
@@ -15,9 +16,11 @@ namespace DatingApp.API.Controllers
   public class AuthController : Controller
   {
       private readonly IAuthRepository _repo;
-      public AuthController(IAuthRepository repo)
+      private readonly IConfiguration _config;
+      public AuthController(IAuthRepository repo, IConfiguration config)    // DI.
       {
           _repo = repo;
+          _config = config;
       }
 
       [HttpPost("register")]
@@ -50,21 +53,23 @@ namespace DatingApp.API.Controllers
             return Unauthorized();
 
           // Generate the JWT.
-          var tokenHandler = new JwtSecurityTokenHandler();
-          var key = Encoding.ASCII.GetBytes("super secret key");
+          var tokenHandler = new JwtSecurityTokenHandler();                 // Std JWT header here.
+          var key = Encoding.ASCII.GetBytes(_config.GetSection("AppSettings:Token").Value);  // App key here.
           var tokenDescriptor = new SecurityTokenDescriptor {
-                Subject = new ClaimsIdentity(new Claim[] {                              // Payload here (user data).
+                Subject = new ClaimsIdentity(new Claim[] {                  // Payload here (user data).
                     new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
                     new Claim(ClaimTypes.Name, userFromRepo.Username)
                 }),
-                Expires = DateTime.Now.AddDays(1),                                      // Payload here (timestamps).
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),   
-                                                            SecurityAlgorithms.HmacSha512Signature)
+                Expires = DateTime.Now.AddDays(1),                          // Payload here (timestamps).
+                // Note: issuer and audience can be specified in the payloafd as well.
+                SigningCredentials = 
+                    new SigningCredentials(new SymmetricSecurityKey(key),   // Signature here with secret.
+                                           SecurityAlgorithms.HmacSha512Signature)
                 };
-          var token = tokenHandler.CreateToken(tokenDescriptor);
+          var token = tokenHandler.CreateToken(tokenDescriptor);        // Encode and connect the pieces.
           var tokenString = tokenHandler.WriteToken(token);
 
-          return Ok(new{ tokenString } );
+          return Ok(new { tokenString } );   // Return the new JWT as JSON object.
       }
   }
 }
