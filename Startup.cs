@@ -29,7 +29,8 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
-            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<DataContext>(
+                x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));            
             services.AddMvc();
             services.AddCors(); // Allows access from the SPA front-end stage. Order does not matter here.
             services.AddScoped<IAuthRepository, AuthRepository>();  // One service instance per http request.

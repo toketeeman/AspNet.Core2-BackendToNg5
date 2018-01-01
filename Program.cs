@@ -18,7 +18,7 @@ namespace DatingApp.API
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+            WebHost.CreateDefaultBuilder(args)  // By default, appsettings.json is brought in here.
                 .UseStartup<Startup>()
                 .Build();
     }
