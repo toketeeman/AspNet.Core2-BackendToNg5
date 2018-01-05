@@ -26,10 +26,11 @@ namespace DatingApp.API.Controllers
       [HttpPost("register")]
       public async Task<IActionResult> Register([FromBody]UserForRegisterDto userForRegisterDto) {
           // Validate request
-          userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
+          if(!string.IsNullOrEmpty(userForRegisterDto.Username))    // Avoid lower-casing of null string causing needless exception.
+              userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
 
           if (await _repo.UserExists(userForRegisterDto.Username)) {
-              ModelState.AddModelError("Username", "Username is already taken");  // Use the appropriate dto key.
+              ModelState.AddModelError("Username", "Username already exists");  // Use the appropriate dto key.
           }
 
           if (!ModelState.IsValid)
@@ -47,29 +48,31 @@ namespace DatingApp.API.Controllers
       [HttpPost("login")]
       public async Task<IActionResult> Login([FromBody]UserForLoginDto userForLoginDto) {
 
-          var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
+        //throw new Exception("Computer says no!");
 
-          if (userFromRepo == null)
+        var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
+
+        if (userFromRepo == null)
             return Unauthorized();
 
-          // Generate the JWT.
-          var tokenHandler = new JwtSecurityTokenHandler();                 // Std JWT header here.
-          var key = Encoding.ASCII.GetBytes(_config.GetSection("AppSettings:Token").Value);  // App key here.
-          var tokenDescriptor = new SecurityTokenDescriptor {
-                Subject = new ClaimsIdentity(new Claim[] {                  // Payload here (user data).
-                    new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-                    new Claim(ClaimTypes.Name, userFromRepo.Username)
-                }),
-                Expires = DateTime.Now.AddDays(1),                          // Payload here (timestamps).
-                // Note: issuer and audience can be specified in the payloafd as well.
-                SigningCredentials = 
-                    new SigningCredentials(new SymmetricSecurityKey(key),   // Signature here with secret.
-                                           SecurityAlgorithms.HmacSha512Signature)
-                };
-          var token = tokenHandler.CreateToken(tokenDescriptor);        // Encode and connect the pieces.
-          var tokenString = tokenHandler.WriteToken(token);
+        // Generate the JWT.
+        var tokenHandler = new JwtSecurityTokenHandler();                 // Std JWT header here.
+        var key = Encoding.ASCII.GetBytes(_config.GetSection("AppSettings:Token").Value);  // App key here.
+        var tokenDescriptor = new SecurityTokenDescriptor {
+            Subject = new ClaimsIdentity(new Claim[] {                  // Payload here (user data).
+                new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
+                new Claim(ClaimTypes.Name, userFromRepo.Username)
+            }),
+            Expires = DateTime.Now.AddDays(1),                          // Payload here (timestamps).
+            // Note: issuer and audience can be specified in the payloafd as well.
+            SigningCredentials = 
+                new SigningCredentials(new SymmetricSecurityKey(key),   // Signature here with secret.
+                                        SecurityAlgorithms.HmacSha512Signature)
+            };
+        var token = tokenHandler.CreateToken(tokenDescriptor);        // Encode and connect the pieces.
+        var tokenString = tokenHandler.WriteToken(token);
 
-          return Ok(new { tokenString } );   // Return the new JWT as JSON object.
+        return Ok(new { tokenString } );   // Return the new JWT as JSON object.
       }
   }
 }
