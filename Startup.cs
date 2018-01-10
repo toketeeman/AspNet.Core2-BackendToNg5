@@ -34,7 +34,8 @@ namespace DatingApp.API
         {
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);  // Get JWT secret key.
             services.AddDbContext<DataContext>(
-                x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));            
+                x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddTransient<Seed>();            
             services.AddMvc();
             services.AddCors(); // Allows access from the SPA front-end stage. Order does not matter here.
             services.AddScoped<IAuthRepository, AuthRepository>();  // One service instance per http request.
@@ -50,7 +51,7 @@ namespace DatingApp.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -71,6 +72,7 @@ namespace DatingApp.API
                 });
             }
 
+            // seeder.SeedUsers();      // Uncomment and then enter "dotnet watch run" to re-seed entire database.
             app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
             app.UseAuthentication();
             app.UseMvc();  // Must come last because it issues a response to the request, ending the pipeline.
