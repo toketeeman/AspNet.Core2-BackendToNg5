@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using DatingApp.API.Data;
 using DatingApp.API.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -38,6 +39,7 @@ namespace DatingApp.API
             services.AddTransient<Seed>();    // One service instance per call (and at most one will happen).        
             services.AddMvc();
             services.AddCors(); // Allows access from the SPA front-end stage. Order does not matter here.
+            services.AddAutoMapper();
             services.AddScoped<IAuthRepository, AuthRepository>();  // One service instance per http request.
             services.AddScoped<IDatingRepository, DatingRepository>();  // One service instance per http request.
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
