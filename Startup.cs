@@ -30,15 +30,16 @@ namespace DatingApp.API
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)      // I.E. set up the injectable services.
         {
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);  // Get JWT secret key.
             services.AddDbContext<DataContext>(
                 x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddTransient<Seed>();            
+            services.AddTransient<Seed>();    // One service instance per call (and at most one will happen).        
             services.AddMvc();
             services.AddCors(); // Allows access from the SPA front-end stage. Order does not matter here.
             services.AddScoped<IAuthRepository, AuthRepository>();  // One service instance per http request.
+            services.AddScoped<IDatingRepository, DatingRepository>();  // One service instance per http request.
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         .AddJwtBearer(options => {
                             options.TokenValidationParameters = new TokenValidationParameters{
@@ -48,6 +49,10 @@ namespace DatingApp.API
                                 ValidateAudience = false
                             };
                         });
+            services.AddMvc().AddJsonOptions(opt => 
+            {
+                opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
